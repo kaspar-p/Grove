@@ -1,25 +1,29 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import * as React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { RecoilRoot } from "recoil";
+import { Helmet } from "react-helmet";
+import { ThemeProvider } from "@mui/material/styles";
+
+import HomePage from "./pages/HomePage";
+import Deck from "./pages/Deck";
+
+import theme from "./theme";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <RecoilRoot>
+        <Helmet>
+          <title>grove</title>
+        </Helmet>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/deck/:presentationURI" element={<Deck />} />
+          </Routes>
+        </BrowserRouter>
+      </RecoilRoot>
+    </ThemeProvider>
   );
 }
 
