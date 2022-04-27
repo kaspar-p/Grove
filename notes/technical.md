@@ -88,6 +88,26 @@ Note that we cannot simple subscribe to `:Box :hasProperty :hasColor`, since tha
 
 This sort of subscription works well, but is also limited. The rules of inference need to be hard-coded, and if there are multiple types for a single instance (a `:kaspar` being a `:Person` and also an `:Employee`), it would distill to the first it found. That isn't really supported right now in Grove. Everything can have only one type. And, in fact, everything _needs_ to have exactly one type, in order for the subscriptions to work.
 
-In theory, the best thing to do would have a SPARQL query (a CONSTRUCT) for a component, and IF the results of that CONSTRUCT query change, we would update the component. But I'm pretty sure that this means we would need to run the CONSTRUCT query for each element, even if the smallest thing changes.
+In theory, the best thing to do would have a SPARQL query (a CONSTRUCT) for a component (or a SHACL shape) and IF the results of that CONSTRUCT query change, we would update the component. But I'm pretty sure that this means we would need to run the CONSTRUCT query for each element, even if the smallest thing changes.
 
 ### Updating the DOM: Take 2
+
+Jamie brought up a really good suggestion recently. Really, the best thing would be a SHACL shape to describe the beginning and end of what a component has to worry about. For example, each slide in Grove would worry about the SHACL shape for :Slide (parameterized for their number), and each type of object would have its shape. It might also need the shape for its style object, if we decide to continue going down that route (parameterized with the URI of the object of the dcao:usesStyle predicate).
+
+There are more pros than cons, here, so we detail the cons first. The first con for moving the level of granularity from quads to shapes is obviously that loss of detail. You can no longer subscribe to disparate triples from the model that have nothing to do with each other. This is a con on face value, but honestly, this wouldn't be that useful. If it WOULD HAVE BEEN useful, we are probably building the application wrong.
+
+Imagine a situation where you are depending on the color of boxes, the slide numbers of slides, and the name of the presentation, as examples. Those three triples could all be subscribed to in a component in the per-quad subscription method, but there would never be a shape describing those. However, what would a component like that do? There is likely no use case for anything like that.
+
+Anything that is logically bound together needs a SHACL shape, which is a way of logically binding things together.
+
+Then, we detail the advantages of this solution. I think there are more advantages than disadvantages here.
+
+The first advantage for per-shape subscriptions is the lower level of granularity actually allows you to define the shapes up front. This is a part of designing an application anyway, to designate which data belongs to which object. Since this work is already being done, we can depend on that work and potentially define atoms on top of them that could be subscribed to.
+
+The second advantage is it gives a label-able name for something that could have been a random collection. Seeing the list [color, width, height, x, y] might _allude_ to a box, but doesn't come right out and say it, whereas a line like `subscribeTo(model.box)`, or potentially parameterized `subscribeTo(model.box(boxUri))`, would make things much more clear.
+
+The third advantage this method has over per-quad subscriptions is the ease of distillation. I mentioned that distillation felt very arbitrary above, and that things were really being distilled only because I depended on them being distilled that way. Well, with per-shape subscriptions there wouldn't have to be a distillation. We could say something like `model.box.new()` that would create a new box, and immediately that can call `model.box.update()` or something. It could update the atom that lives at `model.box`.
+
+That is, we can have the basic CRUD operations on a shape based at `model.[shape]`. For example, for box, we could have `model.box.new()`, `model.box.edit({ ... propertiesToEdit ...})`, `model.box.delete(boxUri)`. We might not need Read functionality of CRUD, but maybe. Not sure.
+
+There is still potentially a downside, in that there is a level of encapsulation between the frontend and the triples in this case. To be honest, `model.box.new()` need not create triples at all, and it might just create a new box as a JSON object and pass that into the frontend somehow. There is nothing triple-y about this solution, except for the fact that we have created shapes for these objects. The shapes aren't even SHACL shapes. They are just names for subscriptable things...
