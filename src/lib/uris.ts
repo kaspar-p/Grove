@@ -1,8 +1,8 @@
-import n3 from "n3";
+import { DataFactory, NamedNode } from "n3";
 
-import QuadAtom from "./QuadAtom";
+import { ShapeAtom } from "./ShapeAtom";
 
-const { namedNode, quad } = n3.DataFactory;
+const { namedNode, quad } = DataFactory;
 
 const uris = {
   type: namedNode("type"),
@@ -19,37 +19,45 @@ const uris = {
 };
 
 // Model
-const presentationHasSlide = QuadAtom.make(
-  quad(uris.Presentation, uris.has, uris.Slide)
-);
-const slideHasBox = QuadAtom.make(quad(uris.Slide, uris.has, uris.Box));
-const boxHasPropertyX = QuadAtom.make(
-  quad(uris.Box, uris.hasProperty, uris.hasX)
-);
-const boxHasPropertyY = QuadAtom.make(
-  quad(uris.Box, uris.hasProperty, uris.hasY)
-);
-const boxHasPropertyWidth = QuadAtom.make(
-  quad(uris.Box, uris.hasProperty, uris.hasWidth)
-);
-const boxHasPropertyHeight = QuadAtom.make(
-  quad(uris.Box, uris.hasProperty, uris.hasHeight)
-);
-const boxHasPropertyColor = QuadAtom.make(
-  quad(uris.Box, uris.hasProperty, uris.hasColor)
-);
+// const presentationHasSlide = QuadAtom.make(
+//   quad(uris.Presentation, uris.has, uris.Slide)
+// );
+// const slideHasBox = QuadAtom.make(quad(uris.Slide, uris.has, uris.Box));
+// const boxHasPropertyX = QuadAtom.make(
+//   quad(uris.Box, uris.hasProperty, uris.hasX)
+// );
+// const boxHasPropertyY = QuadAtom.make(
+//   quad(uris.Box, uris.hasProperty, uris.hasY)
+// );
+// const boxHasPropertyWidth = QuadAtom.make(
+//   quad(uris.Box, uris.hasProperty, uris.hasWidth)
+// );
+// const boxHasPropertyHeight = QuadAtom.make(
+//   quad(uris.Box, uris.hasProperty, uris.hasHeight)
+// );
+// const boxHasPropertyColor = QuadAtom.make(
+//   quad(uris.Box, uris.hasProperty, uris.hasColor)
+// );
 
-interface Model {
-  [x: string]: QuadAtom;
-}
-export const model: Model = {
-  presentationHasSlide,
-  slideHasBox,
-  boxHasPropertyX,
-  boxHasPropertyY,
-  boxHasPropertyWidth,
-  boxHasPropertyHeight,
-  boxHasPropertyColor,
-};
+// interface Model {
+//   box: (term?: NamedNode | undefined) => ShapeAtom;
+//   slide: (term?: NamedNode | undefined) => ShapeAtom;
+// }
+// export const model: Model = {
+//   slide: (term?: NamedNode | undefined): ShapeAtom => {
+//     if (term) {
+//       return ShapeAtom.make(term.value);
+//     } else {
+//       return ShapeAtom.make("slide");
+//     }
+//   },
+//   box: (term?: NamedNode | undefined): ShapeAtom => {
+//     if (term) {
+//       return ShapeAtom.make(term.value);
+//     } else {
+//       return ShapeAtom.make("box");
+//     }
+//   },
+// };
 
 export default uris;

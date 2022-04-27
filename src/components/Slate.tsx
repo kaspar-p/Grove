@@ -5,7 +5,7 @@ import { DataFactory, NamedNode, Store } from "n3";
 import { quadToString } from "../lib/utils";
 import { getOne } from "../lib/n3";
 import uris, { model } from "../lib/uris";
-import { useSubscribeTo } from "../lib/QuadAtom";
+import { useSubscribeTo } from "../lib/ShapeAtom";
 import { changeBoxColor, addNewBox } from "../lib/actions";
 
 const { quad, namedNode } = DataFactory;
@@ -27,25 +27,13 @@ interface RenderBoxPropTypes {
   boxTerm: NamedNode;
 }
 function RenderBox({ boxTerm }: RenderBoxPropTypes) {
-  console.log("Rendering:", boxTerm.value);
+  const setter = useSubscribeTo(model.box(boxTerm));
 
   const height = getOne(store, boxTerm, uris.hasHeight);
   const width = getOne(store, boxTerm, uris.hasWidth);
   const y = getOne(store, boxTerm, uris.hasY);
   const x = getOne(store, boxTerm, uris.hasX);
   const color = getOne(store, boxTerm, uris.hasColor);
-
-  // TODO: Somehow parameterize <object> :hasProperty <property> triples
-  // To take something for the <object> without creating the atom every time...
-  const hasPropertyMap = (subject: NamedNode, usedPredicate: NamedNode) => {
-    const propertyQuad = quad(subject, uris.hasProperty, usedPredicate);
-    return model[quadToString(propertyQuad)];
-  };
-  const setters = useSubscribeTo(
-    hasPropertyMap(boxTerm, uris.hasColor),
-    hasPropertyMap(boxTerm, uris.hasX),
-    hasPropertyMap(boxTerm, uris.hasY)
-  );
 
   return (
     <Box
@@ -82,7 +70,7 @@ function RenderBox({ boxTerm }: RenderBoxPropTypes) {
         console.log(
           `Box ${boxTerm.value} got clicked! Changing color to ${newColor}!`
         );
-        changeBoxColor(store, setters, boxTerm, newColor);
+        changeBoxColor(store, setter, boxTerm, newColor);
       }}
     />
   );
@@ -94,7 +82,7 @@ function RenderBox({ boxTerm }: RenderBoxPropTypes) {
 
 function Slate() {
   console.log("Rendering: slide1!");
-  const setters = useSubscribeTo(model.slideHasBox);
+  const setter = useSubscribeTo(model.slide());
 
   return (
     <Box
@@ -104,7 +92,7 @@ function Slate() {
         const rect = event.currentTarget.getBoundingClientRect();
         const X = event.clientX - rect.left;
         const Y = event.clientY - rect.top;
-        addNewBox(store, setters, slide1, X - 25, Y - 25);
+        addNewBox(store, setter, slide1, X - 25, Y - 25);
       }}
     >
       {store.getObjects(slide1, uris.has, null).map((boxTerm) => (

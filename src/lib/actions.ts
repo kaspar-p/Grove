@@ -2,31 +2,37 @@ import { NamedNode, DataFactory, Store } from "n3";
 
 import uris, { model } from "./uris";
 import { quadToString } from "./utils";
-import { getOne, SetterMap, addQuadComplex, removeQuadComplex } from "./n3";
-import QuadAtom from "./QuadAtom";
+import { getOne } from "./n3";
+import { ShapeAtom } from "./ShapeAtom";
+import { SetterOrUpdater } from "recoil";
 
 const { literal, quad, namedNode } = DataFactory;
 
+type Setter = (f: (curr: number) => number) => void;
+function updateSetter(setter: Setter) {
+  setter((curr: number) => curr + 1);
+}
+
 export function changeBoxColor(
   store: Store,
-  setters: SetterMap,
+  setter: SetterOrUpdater<number>,
   boxTerm: NamedNode,
   newColor: string
 ) {
-  const qToRemove = quad(
-    boxTerm,
-    uris.hasColor,
-    literal(getOne(store, boxTerm, uris.hasColor) as string)
+  store.removeQuad(
+    quad(
+      boxTerm,
+      uris.hasColor,
+      literal(getOne(store, boxTerm, uris.hasColor) as string)
+    )
   );
-  const qToAdd = quad(boxTerm, uris.hasColor, literal(newColor));
-
-  removeQuadComplex(store, setters, qToRemove);
-  addQuadComplex(store, setters, qToAdd);
+  store.addQuad(quad(boxTerm, uris.hasColor, literal(newColor)));
+  updateSetter(setter);
 }
 
 export function addNewBox(
   store: Store,
-  setters: SetterMap,
+  setter: SetterOrUpdater<number>,
   slide: NamedNode,
   clickX: number,
   clickY: number
@@ -43,13 +49,10 @@ export function addNewBox(
     quad(newBox, uris.hasColor, literal("yellow")),
     quad(slide, uris.has, newBox),
   ];
-  quads.forEach((q) => {
-    addQuadComplex(store, setters, q);
-  });
+  store.addQuads(quads);
 
   // Add the <boxTerm> :hasProperty :hasColor into the model as a possible triple to subscribe to
-  const newModelTriple = QuadAtom.make(
-    quad(newBox, uris.hasProperty, uris.hasColor)
-  );
-  model[quadToString(newModelTriple.quad)] = newModelTriple;
+  const newBoxShapeAtom = ShapeAtom.make(newBox.value);
+  model.box._addNew(newBoxShapeAtom);
+  updateSetter(setter);
 }
