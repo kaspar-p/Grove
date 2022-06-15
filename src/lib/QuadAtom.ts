@@ -26,9 +26,11 @@ class QuadAtom {
 export function subscribeTo(...quadAtoms: QuadAtom[]) {
   const setters: { [x: string]: SetterOrUpdater<number> } = {};
   for (const quadAtom of quadAtoms) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [, setter] = useRecoilState(quadAtom.atom);
-    setters[quadAtom.atom.key] = setter;
+    if (quadAtom) {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const [, setter] = useRecoilState(quadAtom.atom);
+      setters[quadAtom.atom.key] = setter;
+    }
   }
 
   return setters;

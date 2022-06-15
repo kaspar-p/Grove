@@ -1,9 +1,7 @@
 import { NamedNode, DataFactory, Store } from "n3";
 
-import uris, { model } from "./uris";
-import { quadToString } from "./utils";
+import uris from "./uris";
 import { getOne, SetterMap, addQuadComplex, removeQuadComplex } from "./n3";
-import QuadAtom from "./QuadAtom";
 
 const { literal, quad, namedNode } = DataFactory;
 
@@ -21,13 +19,7 @@ export function changeBoxColor(
   const qToAdd = quad(boxTerm, uris.hasColor, literal(newColor));
 
   removeQuadComplex(store, setters, qToRemove);
-  addQuadComplex(store, setters, qToAdd);
-}
-
-export function addQuadAtomsToModel(quadAtoms: QuadAtom[]): void {
-  quadAtoms.forEach((quadAtom: QuadAtom) => {
-    model[quadToString(quadAtom.quad)] = quadAtom;
-  });
+  addQuadComplex(store, qToAdd, setters);
 }
 
 export function addNewBox(
@@ -49,19 +41,8 @@ export function addNewBox(
     quad(newBox, uris.hasColor, literal("yellow")),
     quad(slide, uris.has, newBox),
   ];
+
   quads.forEach((q) => {
-    addQuadComplex(store, setters, q);
+    addQuadComplex(store, q, setters);
   });
-
-  // Add the <boxTerm> :hasProperty :something into the model as a possible triple to subscribe to
-  const newModelTriples = [
-    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasColor)),
-    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasX)),
-    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasY)),
-    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasWidth)),
-    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasHeight)),
-    QuadAtom.make(quad(newBox, uris.hasProperty, uris.type)),
-  ];
-
-  addQuadAtomsToModel(newModelTriples);
 }

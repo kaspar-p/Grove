@@ -1,39 +1,51 @@
-import * as React from "react";
+import React, { useEffect } from "react";
 import { Box } from "@mui/material";
 import { DataFactory, NamedNode, Store } from "n3";
 
 import { quadToString } from "../lib/utils";
-import { getOne } from "../lib/n3";
+import { getOne, addQuadComplex } from "../lib/n3";
 import uris, { model } from "../lib/uris";
 import QuadAtom, { subscribeTo } from "../lib/QuadAtom";
-import { changeBoxColor, addNewBox, addQuadAtomsToModel } from "../lib/actions";
+import { changeBoxColor, addNewBox } from "../lib/actions";
 
 const { quad, namedNode } = DataFactory;
-
-// Store
-const store = new Store();
 
 const presentation1 = namedNode("presentation1");
 const slide1 = namedNode("slide1");
 
-store.addQuads(Object.values(model).map((quadAtom) => quadAtom.quad));
-store.addQuads([
-  quad(slide1, uris.type, uris.Slide),
-  quad(presentation1, uris.type, uris.Presentation),
-  quad(presentation1, uris.has, slide1),
-]);
+// Store
+const store = new Store();
+function initializeStore() {
+  console.log("Initializing store and model!");
+  // Add model triples into the store
+  Object.values(model).forEach((quadAtom) =>
+    addQuadComplex(store, quadAtom.quad)
+  );
 
-const newModelTriples = [
-  QuadAtom.make(quad(slide1, uris.hasProperty, uris.has)),
-];
-
-addQuadAtomsToModel(newModelTriples);
+  // Add initial triples into the store
+  // TODO: replace with ingest presentation
+  const quadsToAdd = [
+    quad(slide1, uris.type, uris.Slide),
+    quad(presentation1, uris.type, uris.Presentation),
+    quad(presentation1, uris.has, slide1),
+  ];
+  quadsToAdd.forEach((q) => addQuadComplex(store, q));
+}
 
 // TODO: Somehow parameterize <object> :hasProperty <property> triples
 // To take something for the <object> without creating the atom every time...
-const hasPropertyMap = (subject: NamedNode, usedPredicate: NamedNode) => {
+const hasPropertyMap = (
+  subject: NamedNode,
+  usedPredicate: NamedNode
+): QuadAtom => {
   const propertyQuad = quad(subject, uris.hasProperty, usedPredicate);
-  return model[quadToString(propertyQuad)];
+  if (quadToString(propertyQuad) in model) {
+    return model[quadToString(propertyQuad)];
+  } else {
+    const quadAtom = QuadAtom.make(propertyQuad);
+    model[quadToString(propertyQuad)] = quadAtom;
+    return quadAtom;
+  }
 };
 
 interface RenderBoxPropTypes {
@@ -100,6 +112,10 @@ function RenderBox({ boxTerm }: RenderBoxPropTypes) {
 //  2. if it really is fast
 
 function Slate() {
+  useEffect(() => {
+    initializeStore();
+  }, []);
+
   console.log("Rendering: slide1!");
   const setters = subscribeTo(hasPropertyMap(slide1, uris.has));
 

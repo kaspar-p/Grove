@@ -1,5 +1,7 @@
 import { Store, NamedNode, Quad, DataFactory } from "n3";
 import { SetterOrUpdater } from "recoil";
+import { model } from "./uris";
+import QuadAtom from "./QuadAtom";
 import { quadToString } from "./utils";
 import uris from "./uris";
 
@@ -27,20 +29,28 @@ function updateQuadAtom(setterMap: SetterMap, quad: Quad) {
 // In some way I want a component to SUBSCRIBE to a set of triples in the model.
 // Such that if triples matching that triple in the model are added or deleted, the component is re-rendered.
 
+export function addQuadAtomToModel(quadAtom: QuadAtom): void {
+  const key = quadToString(quadAtom.quad);
+  if (!(key in model)) model[key] = quadAtom;
+}
+
 export const addQuadComplex = (
   n3Store: Store,
-  setterMap: SetterMap,
-  quadToAdd: Quad
+  quadToAdd: Quad,
+  setterMap?: SetterMap
 ) => {
   const propertyQuad = quad(
     quadToAdd.subject,
     uris.hasProperty,
     quadToAdd.predicate
   );
-  updateQuadAtom(setterMap, propertyQuad);
+  if (!(quadToString(propertyQuad) in model)) {
+    addQuadAtomToModel(QuadAtom.make(propertyQuad));
+  }
+  if (setterMap) updateQuadAtom(setterMap, propertyQuad);
 
   n3Store.addQuad(quadToAdd);
-  updateQuadAtom(setterMap, quadToAdd);
+  if (setterMap) updateQuadAtom(setterMap, quadToAdd);
 };
 
 export const removeQuadComplex = (
