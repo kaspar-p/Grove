@@ -24,6 +24,12 @@ export function changeBoxColor(
   addQuadComplex(store, setters, qToAdd);
 }
 
+export function addQuadAtomsToModel(quadAtoms: QuadAtom[]): void {
+  quadAtoms.forEach((quadAtom: QuadAtom) => {
+    model[quadToString(quadAtom.quad)] = quadAtom;
+  });
+}
+
 export function addNewBox(
   store: Store,
   setters: SetterMap,
@@ -47,9 +53,15 @@ export function addNewBox(
     addQuadComplex(store, setters, q);
   });
 
-  // Add the <boxTerm> :hasProperty :hasColor into the model as a possible triple to subscribe to
-  const newModelTriple = QuadAtom.make(
-    quad(newBox, uris.hasProperty, uris.hasColor)
-  );
-  model[quadToString(newModelTriple.quad)] = newModelTriple;
+  // Add the <boxTerm> :hasProperty :something into the model as a possible triple to subscribe to
+  const newModelTriples = [
+    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasColor)),
+    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasX)),
+    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasY)),
+    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasWidth)),
+    QuadAtom.make(quad(newBox, uris.hasProperty, uris.hasHeight)),
+    QuadAtom.make(quad(newBox, uris.hasProperty, uris.type)),
+  ];
+
+  addQuadAtomsToModel(newModelTriples);
 }

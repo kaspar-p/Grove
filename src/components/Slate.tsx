@@ -5,8 +5,8 @@ import { DataFactory, NamedNode, Store } from "n3";
 import { quadToString } from "../lib/utils";
 import { getOne } from "../lib/n3";
 import uris, { model } from "../lib/uris";
-import { useSubscribeTo } from "../lib/QuadAtom";
-import { changeBoxColor, addNewBox } from "../lib/actions";
+import QuadAtom, { subscribeTo } from "../lib/QuadAtom";
+import { changeBoxColor, addNewBox, addQuadAtomsToModel } from "../lib/actions";
 
 const { quad, namedNode } = DataFactory;
 
@@ -23,6 +23,19 @@ store.addQuads([
   quad(presentation1, uris.has, slide1),
 ]);
 
+const newModelTriples = [
+  QuadAtom.make(quad(slide1, uris.hasProperty, uris.has)),
+];
+
+addQuadAtomsToModel(newModelTriples);
+
+// TODO: Somehow parameterize <object> :hasProperty <property> triples
+// To take something for the <object> without creating the atom every time...
+const hasPropertyMap = (subject: NamedNode, usedPredicate: NamedNode) => {
+  const propertyQuad = quad(subject, uris.hasProperty, usedPredicate);
+  return model[quadToString(propertyQuad)];
+};
+
 interface RenderBoxPropTypes {
   boxTerm: NamedNode;
 }
@@ -35,13 +48,7 @@ function RenderBox({ boxTerm }: RenderBoxPropTypes) {
   const x = getOne(store, boxTerm, uris.hasX);
   const color = getOne(store, boxTerm, uris.hasColor);
 
-  // TODO: Somehow parameterize <object> :hasProperty <property> triples
-  // To take something for the <object> without creating the atom every time...
-  const hasPropertyMap = (subject: NamedNode, usedPredicate: NamedNode) => {
-    const propertyQuad = quad(subject, uris.hasProperty, usedPredicate);
-    return model[quadToString(propertyQuad)];
-  };
-  const setters = useSubscribeTo(
+  const setters = subscribeTo(
     hasPropertyMap(boxTerm, uris.hasColor),
     hasPropertyMap(boxTerm, uris.hasX),
     hasPropertyMap(boxTerm, uris.hasY)
@@ -94,13 +101,14 @@ function RenderBox({ boxTerm }: RenderBoxPropTypes) {
 
 function Slate() {
   console.log("Rendering: slide1!");
-  const setters = useSubscribeTo(model.slideHasBox);
+  const setters = subscribeTo(hasPropertyMap(slide1, uris.has));
 
   return (
     <Box
       flexGrow={1}
       sx={{ backgroundColor: "lightgray", position: "relative" }}
       onDoubleClick={(event) => {
+        console.log("right here");
         const rect = event.currentTarget.getBoundingClientRect();
         const X = event.clientX - rect.left;
         const Y = event.clientY - rect.top;

@@ -23,12 +23,13 @@ class QuadAtom {
 }
 
 // This potentially leads to an issue where different hooks are being called on different renders - breaking the hooks rule as per Danny
-export function useSubscribeTo(...quadAtoms: QuadAtom[]) {
+export function subscribeTo(...quadAtoms: QuadAtom[]) {
   const setters: { [x: string]: SetterOrUpdater<number> } = {};
-  quadAtoms.forEach((quadAtom) => {
+  for (const quadAtom of quadAtoms) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [, setter] = useRecoilState(quadAtom.atom);
     setters[quadAtom.atom.key] = setter;
-  });
+  }
 
   return setters;
 }
